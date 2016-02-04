@@ -11,18 +11,8 @@ near-realtime picture of Earth.
 
 ## Supported Desktop Environments
 ### Tested
-* Unity 7
+* OS X
 
-### Not Tested
-* GNOME 3
-* MATE
-
-### Not Supported
-* [LXDE](http://wiki.lxde.org/en/LXDE_To_Do#PCManFM_.28file_manager.29)
-* KDE
-
-  Because I simply couldn't find a way to do it. Maybe [KDE API](http://api.kde.org/4.9-api/kdelibs-apidocs/plasma/html/classPlasma_1_1Wallpaper.html)?
-* ... and all other desktop environments that are not mentioned above.
 
 ## Configuration
 You can configure the level of detail, by modifying the script. You can set the
@@ -31,12 +21,10 @@ thus the file size as well). Please keep in mind that it will also take more
 time to download the tiles.
 
 ## Installation
+    /usr/bin/easy_install Pillow
+
     cd ~
-    git clone https://github.com/boramalper/himawaripy.git
-    
-    # configure
-    cd ~/himawaripy
-    vi himawaripy.py
+    git clone https://github.com/mzupan/himawaripy.git
     
     # test whether it's working
     ./himawaripy.py
