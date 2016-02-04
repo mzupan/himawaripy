@@ -1,15 +1,19 @@
-#!/usr/bin/env python3
+#!/usr/bin/python
+
+
+import tempfile
+import urllib2
+import json
 
 from io import BytesIO
-from json import loads
-from time import strptime, strftime
+from time import strptime, strftime, sleep
 from os import system
 from os.path import expanduser
-from urllib.request import urlopen
 
 from PIL import Image
 
-from utils import get_desktop_environment
+from AppKit import NSWorkspace, NSScreen
+from Foundation import NSURL
 
 # Configuration
 # =============
@@ -24,8 +28,8 @@ def main():
     height = 550
 
     print("Updating...")
-    with urlopen("http://himawari8-dl.nict.go.jp/himawari8/img/D531106/latest.json") as latest_json:
-        latest = strptime(loads(latest_json.read().decode("utf-8"))["date"], "%Y-%m-%d %H:%M:%S")
+    j = urllib2.urlopen("http://himawari8-dl.nict.go.jp/himawari8/img/D531106/latest.json")
+    latest = strptime(json.load(j)["date"], "%Y-%m-%d %H:%M:%S")
 
     print("Latest version: {} GMT\n".format(strftime("%Y/%m/%d/%H:%M:%S", latest)))
 
@@ -33,33 +37,35 @@ def main():
 
     png = Image.new('RGB', (width*level, height*level))
 
-    print("Downloading tiles: 0/{} completed".format(level*level), end="\r")
+    print("Downloading tiles: 0/{} completed".format(level*level))
     for x in range(level):
         for y in range(level):
-            with urlopen(url_format.format(level, width, strftime("%Y/%m/%d/%H%M%S", latest), x, y)) as tile_w:
-                tiledata = tile_w.read()
+            tile_w = urllib2.urlopen(url_format.format(level, width, strftime("%Y/%m/%d/%H%M%S", latest), x, y))
+            tiledata = tile_w.read()
 
             tile = Image.open(BytesIO(tiledata))
             png.paste(tile, (width*x, height*y, width*(x+1), height*(y+1)))
 
-            print("Downloading tiles: {}/{} completed".format(x*level + y + 1, level*level), end="\r")
+            print("Downloading tiles: {}/{} completed".format(x*level + y + 1, level*level))
     print("\nDownloaded\n")
 
-    output_file = expanduser("~/.himawari-latest.png")
+    output_file = tempfile.NamedTemporaryFile().name + ".png"
     png.save(output_file, "PNG")
 
-    de = get_desktop_environment()
-    if de in ["gnome", "unity", "cinnamon"]:
-        # Because of a bug and stupid design of gsettings, see http://askubuntu.com/a/418521/388226
-        system("gsettings set org.gnome.desktop.background draw-background false \
-                && gsettings set org.gnome.desktop.background picture-uri file://" + output_file +
-                " && gsettings set org.gnome.desktop.background picture-options scaled")
-    elif de == "mate":
-        system("gconftool-2 -type string -set /desktop/gnome/background/picture_filename \"{}\"".format(expanduser("~/.himawari-latest.png")))
-    elif de == "xfce4":
-        system("xfconf-query --channel xfce4-desktop --property /backdrop/screen0/monitor0/image-path --set " + expanduser("~/.himawari-latest.png"))
-    else:
-        exit("Your desktop environment '{}' is not supported.".format(de))
+    file_url = NSURL.fileURLWithPath_(output_file)
+    options = {'NSImageScaleProportionallyUpOrDown': True}
+
+    # get shared workspace
+    ws = NSWorkspace.sharedWorkspace()
+
+    # iterate over all screens
+    for screen in NSScreen.screens():
+        # tell the workspace to set the desktop picture
+        (result, error) = ws.setDesktopImageURL_forScreen_options_error_(
+                    file_url, screen, options, None)
+        if error:
+            print error
+            exit(-1)
 
     print("Done!\n")
 
