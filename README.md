@@ -21,10 +21,15 @@ thus the file size as well). Please keep in mind that it will also take more
 time to download the tiles.
 
 ## Installation
+
+This uses the system python as installed by Apple. So you need to install `Pillow` as shown below. This was a quick edit from a project I saw and I've been too lazy to see if I can pip install the pyobjC libraries into a homebrew python
+
+
     /usr/bin/easy_install Pillow
 
     cd ~
     git clone https://github.com/mzupan/himawaripy.git
+    cd himawaripy
     
     # test whether it's working
     ./himawaripy.py
@@ -32,7 +37,7 @@ time to download the tiles.
     # set up a cronjob
     crontab -e
     # Add the line:
-    # */10 * * * * /home/USERNAME/himawaripy/himawaripy.py
+    # */20 * * * * /home/USERNAME/himawaripy/himawaripy.py >/dev/null 2>&1
     
 ## Example
 ![Earth, as 2016/02/04/13:30:00 GMT](http://i.imgur.com/4XA6WaM.jpg)
